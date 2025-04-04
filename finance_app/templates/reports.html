@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Raporlar - Kişisel Finans Yönetimi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Finansal Raporlarım</h1>
+    </div>
+</div>
+
+<!-- Grafik Bölümü -->
+<div class="row mb-4">
+    <!-- Aylık Gelir/Gider Karşılaştırması -->
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Aylık Gelir ve Gider Karşılaştırması</h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_incomes and monthly_expenses %}
+                    <div class="chart-container">
+                        <canvas id="monthly-income-expense-chart"></canvas>
+                    </div>
+                    <!-- JSON veri formatı -->
+                    <div id="monthly-comparison-data" data-monthly='[
+                        {% for year, month, total in monthly_incomes %}
+                            {
+                                "month": "{{ month }}/{{ year }}",
+                                "income": {{ total }},
+                                "expense": {% set found = false %}{% for e_year, e_month, e_total in monthly_expenses %}{% if e_year == year and e_month == month %}{{ e_total }}{% set found = true %}{% endif %}{% endfor %}{% if not found %}0{% endif %}
+                            }{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]' class="d-none"></div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <p>Yeterli veri olmadığı için grafik oluşturulamadı.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kategori Bazlı Gider Dağılımı -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Kategori Bazlı Gider Dağılımı</h5>
+            </div>
+            <div class="card-body">
+                {% if category_percentages %}
+                    <div class="chart-container">
+                        <canvas id="category-expense-chart"></canvas>
+                    </div>
+                    <!-- JSON veri formatı -->
+                    <div id="category-expense-data" data-categories='[
+                        {% for item in category_percentages %}
+                            {"category": "{{ item.category }}", "percentage": {{ item.percentage }}, "amount": {{ item.amount }}}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]' class="d-none"></div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p>Yeterli veri olmadığı için grafik oluşturulamadı.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bütçe Karşılaştırma Bölümü -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Aylık Bütçe ve Harcama Karşılaştırması</h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_budget_vs_expense %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Ay</th>
+                                    <th class="text-end">Bütçe</th>
+                                    <th class="text-end">Harcama</th>
+                                    <th class="text-end">Fark</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in monthly_budget_vs_expense %}
+                                    <tr>
+                                        <td>{{ item.month }}</td>
+                                        <td class="text-end">{{ "%.2f TL"|format(item.budget) }}</td>
+                                        <td class="text-end">{{ "%.2f TL"|format(item.expense) }}</td>
+                                        <td class="text-end {{ 'text-success' if item.difference >= 0 else 'text-danger' }}">
+                                            {{ "%.2f TL"|format(item.difference) }}
+                                        </td>
+                                        <td>
+                                            {% if item.difference >= 0 %}
+                                                <span class="badge bg-success">Bütçe Dahilinde</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Bütçe Aşımı</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                        <p>Henüz bütçe ve harcama karşılaştırması bulunmuyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Veri Dışa Aktarma -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Veri Dışa Aktarma</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-download fa-3x text-primary mb-3"></i>
+                                <h5>Gelir Verisi</h5>
+                                <p>Tüm gelir verilerinizi CSV formatında dışa aktarın.</p>
+                                <a href="{{ url_for('export_data', type='incomes') }}" class="btn btn-primary">
+                                    <i class="fas fa-download me-2"></i>İndir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-download fa-3x text-danger mb-3"></i>
+                                <h5>Gider Verisi</h5>
+                                <p>Tüm gider verilerinizi CSV formatında dışa aktarın.</p>
+                                <a href="{{ url_for('export_data', type='expenses') }}" class="btn btn-danger">
+                                    <i class="fas fa-download me-2"></i>İndir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-download fa-3x text-success mb-3"></i>
+                                <h5>Bütçe Verisi</h5>
+                                <p>Tüm bütçe verilerinizi CSV formatında dışa aktarın.</p>
+                                <a href="{{ url_for('export_data', type='budgets') }}" class="btn btn-success">
+                                    <i class="fas fa-download me-2"></i>İndir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

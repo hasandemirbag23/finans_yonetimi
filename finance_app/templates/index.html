@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Kişisel Finans Yönetimi - Ana Sayfa{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Finansal Özgürlüğünüzü Yönetin</h1>
+        <p class="hero-text">
+            Kişisel Finans Yönetimi uygulaması ile gelir ve giderlerinizi takip edin, 
+            bütçe oluşturun ve finansal hedeflerinize ulaşın.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-chart-line me-2"></i>Dashboard'a Git
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+                </a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Kayıt Ol
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="feature-section bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-money-bill-wave feature-icon"></i>
+                        <h3 class="feature-title">Gelir ve Gider Takibi</h3>
+                        <p>
+                            Tüm gelir ve giderlerinizi kategorilere ayırarak kolayca takip edin. 
+                            Harcamalarınızı görselleştirerek nereye ne kadar harcadığınızı anlayın.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-chart-pie feature-icon"></i>
+                        <h3 class="feature-title">Bütçe Yönetimi</h3>
+                        <p>
+                            Kategori bazlı bütçeler oluşturun ve harcamalarınızı kontrol altında tutun. 
+                            Bütçe limitlerini aştığınızda uyarı alın.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-file-invoice-dollar feature-icon"></i>
+                        <h3 class="feature-title">Detaylı Raporlar</h3>
+                        <p>
+                            Aylık ve yıllık finansal raporlar ile paranızın nereye gittiğini görün. 
+                            Grafik ve tablolarla finansal durumunuzu analiz edin.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="mb-4">Neden Kişisel Finans Yönetimi?</h2>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Kolay ve kullanıcı dostu arayüz
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Gelir ve giderlerinizi kategorilere ayırma
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Bütçe planlama ve takip etme
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Görsel grafikler ve raporlar
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Veri dışa aktarma özelliği
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Güvenli ve özel
+                    </li>
+                </ul>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Hemen Başlayın
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6 text-center">
+                <img src="{{ url_for('static', filename='img/finance-illustration.svg') }}" 
+                     alt="Finans İllüstrasyonu" class="img-fluid" 
+                     onerror="this.src='https://placehold.co/600x400?text=Finans+Y%C3%B6netimi'">
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

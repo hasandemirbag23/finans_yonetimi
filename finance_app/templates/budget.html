@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Bütçe - Kişisel Finans Yönetimi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Bütçe Yönetimi</h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Bütçe Ekleme Formu -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Bütçe Oluştur</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('budget') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.category.label(class="form-label") }}
+                        {% if form.category.errors %}
+                            {{ form.category(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.category.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.category(class="form-select") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.amount.label(class="form-label") }}
+                        {% if form.amount.errors %}
+                            {{ form.amount(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.amount.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.amount(class="form-control") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.month.label(class="form-label") }}
+                            {% if form.month.errors %}
+                                {{ form.month(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.month.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.month(class="form-select") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.year.label(class="form-label") }}
+                            {% if form.year.errors %}
+                                {{ form.year(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.year.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.year(class="form-select") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bütçe Karşılaştırma -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ current_month }} {{ current_year }} Bütçe Durumu</h5>
+                <a href="{{ url_for('export_data', type='budgets') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-download me-1"></i>CSV Olarak İndir
+                </a>
+            </div>
+            <div class="card-body">
+                {% if budget_comparison %}
+                    <div class="list-group">
+                        {% for budget in budget_comparison %}
+                            <div class="budget-item">
+                                <div class="budget-info">
+                                    <div class="budget-category">{{ budget.category }}</div>
+                                    <div class="budget-amount">Bütçe: {{ "%.2f TL"|format(budget.budget_amount) }}</div>
+                                </div>
+                                <div class="budget-info">
+                                    <div class="expense-amount">Harcama: {{ "%.2f TL"|format(budget.expense_amount) }}</div>
+                                    <div class="remaining-amount">Kalan: {{ "%.2f TL"|format(budget.remaining) }}</div>
+                                </div>
+                                <div class="progress">
+                                    {% if budget.percentage > 100 %}
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-valuenow="{{ budget.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% elif budget.percentage > 80 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ budget.percentage }}%" aria-valuenow="{{ budget.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% else %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ budget.percentage }}%" aria-valuenow="{{ budget.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <form action="{{ url_for('delete_budget', id=budgets[loop.index0].id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger delete-btn">
+                                            <i class="fas fa-trash me-1"></i>Sil
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                        <p>Bu ay için henüz bütçe oluşturmadınız.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Bütçe Oluşturma İpuçları</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-lightbulb text-warning me-2"></i>50/30/20 Kuralı</h6>
+                        <p>Gelirlerinizin:</p>
+                        <ul>
+                            <li><strong>%50'sini</strong> temel ihtiyaçlara (kira, faturalar, yiyecek)</li>
+                            <li><strong>%30'unu</strong> isteklerinize (eğlence, alışveriş)</li>
+                            <li><strong>%20'sini</strong> tasarruf ve yatırıma ayırın</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-hand-holding-usd text-success me-2"></i>Öncelikli Bütçeleme</h6>
+                        <p>Aşağıdaki kategorileri öncelikli hale getirin:</p>
+                        <ul>
+                            <li>Acil durum fonu oluşturun (3-6 aylık gider)</li>
+                            <li>Düzenli tasarruf alışkanlığı edinin</li>
+                            <li>Gereksiz aboneliklerinizi gözden geçirin</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

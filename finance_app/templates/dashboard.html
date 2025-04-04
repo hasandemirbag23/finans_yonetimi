@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Kişisel Finans Yönetimi{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="mb-4">Merhaba, {{ current_user.username }}!</h1>
+    </div>
+</div>
+
+<!-- Genel Bakış Kartları -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card overview-card income-card">
+            <div class="card-body">
+                <h5 class="title">Toplam Gelir</h5>
+                <div class="value text-success">{{ "%.2f TL"|format(total_income) }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card overview-card expense-card">
+            <div class="card-body">
+                <h5 class="title">Toplam Gider</h5>
+                <div class="value text-danger">{{ "%.2f TL"|format(total_expense) }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card overview-card balance-card">
+            <div class="card-body">
+                <h5 class="title">Kalan Bakiye</h5>
+                <div class="value {{ 'text-success' if balance >= 0 else 'text-danger' }}">
+                    {{ "%.2f TL"|format(balance) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Son İşlemler ve Grafikler -->
+<div class="row">
+    <!-- Son Gelirler -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Son Gelirler</h5>
+                <a href="{{ url_for('incomes') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-arrow-right me-1"></i>Tümünü Gör
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_incomes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Kategori</th>
+                                    <th>Açıklama</th>
+                                    <th class="text-end">Miktar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for income in recent_incomes %}
+                                    <tr>
+                                        <td>{{ income.date.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ income.category }}</td>
+                                        <td>{{ income.description }}</td>
+                                        <td class="text-end text-success">{{ "%.2f TL"|format(income.amount) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                        <p>Henüz gelir kaydı bulunmuyor.</p>
+                        <a href="{{ url_for('incomes') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-1"></i>Gelir Ekle
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Son Giderler -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Son Giderler</h5>
+                <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-arrow-right me-1"></i>Tümünü Gör
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_expenses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Kategori</th>
+                                    <th>Açıklama</th>
+                                    <th class="text-end">Miktar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in recent_expenses %}
+                                    <tr>
+                                        <td>{{ expense.date.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ expense.category }}</td>
+                                        <td>{{ expense.description }}</td>
+                                        <td class="text-end text-danger">{{ "%.2f TL"|format(expense.amount) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                        <p>Henüz gider kaydı bulunmuyor.</p>
+                        <a href="{{ url_for('expenses') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-1"></i>Gider Ekle
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grafik Bölümü -->
+<div class="row">
+    <!-- Gelir Dağılımı Grafiği -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Gelir Dağılımı</h5>
+            </div>
+            <div class="card-body">
+                {% if incomes_by_category %}
+                    <div class="chart-container">
+                        <canvas id="income-category-chart"></canvas>
+                    </div>
+                    <!-- JSON veri formatında kategori dağılımları -->
+                    <div id="income-category-data" data-categories='[
+                        {% for category, amount in incomes_by_category %}
+                            {"category": "{{ category }}", "amount": {{ amount }}}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]' class="d-none"></div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p>Gelir veriniz olmadığı için grafik görüntülenemiyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gider Dağılımı Grafiği -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Gider Dağılımı</h5>
+            </div>
+            <div class="card-body">
+                {% if expenses_by_category %}
+                    <div class="chart-container">
+                        <canvas id="expense-category-chart"></canvas>
+                    </div>
+                    <!-- JSON veri formatında kategori dağılımları -->
+                    <div id="expense-category-data" data-categories='[
+                        {% for category, amount in expenses_by_category %}
+                            {"category": "{{ category }}", "amount": {{ amount }}}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]' class="d-none"></div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p>Gider veriniz olmadığı için grafik görüntülenemiyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hızlı Erişim Butonları -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Hızlı Erişim</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('incomes') }}" class="btn btn-success w-100 p-3">
+                            <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                            <div>Gelir Ekle</div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('expenses') }}" class="btn btn-danger w-100 p-3">
+                            <i class="fas fa-minus-circle fa-2x mb-2"></i>
+                            <div>Gider Ekle</div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('budget') }}" class="btn btn-primary w-100 p-3">
+                            <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                            <div>Bütçe Oluştur</div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('reports') }}" class="btn btn-info w-100 p-3 text-white">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <div>Raporları Gör</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
